@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱智棱镜 | 哲学情人节</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --existentialism: #ff6b6b;
+            --nihilism: #4ecdc4;
+            --essentialism: #ff9f43;
+            --phenomenology: #54a0ff;
+            --stoicism: #8395a7;
+            --deconstruction: #f368e0;
+            --absurdism: #00d2d3;
+            --utilitarianism: #2ecc71;
+        }
+
+        body {
+            background: radial-gradient(circle at top left, 
+                rgba(255,107,107,0.1) 0%, 
+                rgba(78,205,196,0.1) 100%);
+            min-height: 100vh;
+            font-family: 'Georgia', serif;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            perspective: 1000px;
+        }
+
+        .dialogue-card {
+            background: rgba(255,255,255,0.97);
+            border-radius: 24px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.03);
+            backdrop-filter: blur(20px);
+        }
+
+        .option-card {
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 16px;
+            background: rgba(255,126,182,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-card:hover {
+            transform: rotateY(10deg) translateX(10px);
+        }
+
+        .philosophy-indicator {
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            margin: 2rem 0;
+        }
+
+        .philosophy-progress {
+            height: 100%;
+            background: var(--existentialism);
+            width: 0;
+            transition: width 0.6s ease;
+            border-radius: 4px;
+        }
+
+        .result-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: white;
+            padding: 3rem;
+            border-radius: 32px;
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .radar-chart {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="dialogue-card" id="dialogueBox">
+            <h1>💭 爱之棱镜</h1>
+            <div class="philosophy-indicator">
+                <div class="philosophy-progress" id="progressBar"></div>
+            </div>
+            <div id="questionContainer"></div>
+        </div>
+    </div>
+
+    <div class="result-modal" id="resultModal">
+        <h2>你的爱情存在主义</h2>
+        <div id="philosophyReport"></div>
+    </div>
+
+<script>
+class LovePhilosophyGame {
+    constructor() {
+        this.questions = [
+            {
+                text: "你认为爱情的本质更接近于：",
+                options: [
+                    { 
+                        text: "对抗虚无的生存选择",
+                        philosophy: ['existentialism', 'absurdism'],
+                        quote: "萨特：存在先于本质"
+                    },
+                    { 
+                        text: "灵魂对完美形式的追寻", 
+                        philosophy: ['essentialism', 'platonism'],
+                        quote: "柏拉图：爱欲是通向智慧的阶梯"
+                    }
+                ]
+            },
+            {
+                text: "爱情中的'永恒'意味着：",
+                options: [
+                    { 
+                        text: "无数此刻的连续创造",
+                        philosophy: ['existentialism', 'process'],
+                        quote: "柏格森：时间是绵延的创造"
+                    },
+                    { 
+                        text: "超越时间的理念存在",
+                        philosophy: ['essentialism', 'metaphysics'],
+                        quote: "亚里士多德：永恒是运动的尺度"
+                    }
+                ]
+            },
+            {
+                text: "理解爱情的最佳途径是：",
+                options: [
+                    { 
+                        text: "现象学的直观体验",
+                        philosophy: ['phenomenology', 'intuitionism'],
+                        quote: "胡塞尔：回到事物本身！"
+                    },
+                    { 
+                        text: "逻辑分析的理性解剖",
+                        philosophy: ['logicism', 'positivism'],
+                        quote: "维特根斯坦：凡不可说的，应当沉默"
+                    }
+                ]
+            },
+            {
+                text: "爱情中的痛苦本质是：",
+                options: [
+                    { 
+                        text: "自我超越的炼金之火",
+                        philosophy: ['existentialism', 'dialectics'],
+                        quote: "黑格尔：矛盾是推动世界的原则"
+                    },
+                    { 
+                        text: "应当消除的非理性幻觉",
+                        philosophy: ['stoicism', 'rationalism'],
+                        quote: "斯宾诺莎：不要哭，不要笑，要理解"
+                    }
+                ]
+            },
+            {
+                text: "爱情中的承诺意味着：",
+                options: [
+                    { 
+                        text: "自由选择的自我限定",
+                        philosophy: ['existentialism', 'authenticity'],
+                        quote: "克尔凯郭尔：选择成为你自己"
+                    },
+                    { 
+                        text: "命运必然性的显现",
+                        philosophy: ['determinism', 'essentialism'],
+                        quote: "叔本华：人的行为就像行星的轨道"
+                    }
+                ]
+            },
+            {
+                text: "爱人最本质的特征是：",
+                options: [
+                    { 
+                        text: "永远无法完全认知的谜题",
+                        philosophy: ['alterity', 'deconstruction'],
+                        quote: "列维纳斯：他者的面孔是无限的"
+                    },
+                    { 
+                        text: "可以理性把握的认知对象", 
+                        philosophy: ['logicism', 'empiricism'],
+                        quote: "洛克：心灵是一块白板"
+                    }
+                ]
+            },
+            {
+                text: "爱情中的道德责任源于：",
+                options: [
+                    { 
+                        text: "自我立法的绝对命令",
+                        philosophy: ['kantianism', 'deontology'],
+                        quote: "康德：人是目的，不是手段"
+                    },
+                    { 
+                        text: "最大幸福的功利计算",
+                        philosophy: ['utilitarianism', 'hedonism'],
+                        quote: "边沁：快乐与痛苦的统治者"
+                    }
+                ]
+            },
+            {
+                text: "爱情最根本的价值在于：",
+                options: [
+                    { 
+                        text: "赋予荒诞世界以意义",
+                        philosophy: ['absurdism', 'nihilism'],
+                        quote: "加缪：在无意义的废墟上重生"
+                    },
+                    { 
+                        text: "通向超越的精神阶梯",
+                        philosophy: ['transcendentalism', 'mysticism'],
+                        quote: "奥古斯丁：我们的心永远不安"
+                    }
+                ]
+            }
+        ];
+
+        this.philosophyWeights = {
+            'existentialism': 0,
+            'essentialism': 0,
+            'phenomenology': 0,
+            'stoicism': 0,
+            'deconstruction': 0,
+            'absurdism': 0,
+            'utilitarianism': 0,
+            'platonism': 0,
+            'nihilism': 0,
+            'kantianism': 0
+        };
+        this.currentStep = 0;
+    }
+
+    init() {
+        this.renderQuestion();
+        document.addEventListener('click', this.createHeartParticle.bind(this));
+    }
+
+    renderQuestion() {
+        const container = document.getElementById('questionContainer');
+        const currentQ = this.questions[this.currentStep];
+        
+        container.innerHTML = `
+            <h3>命题 ${this.currentStep + 1}/${this.questions.length}</h3>
+            <p>${currentQ.text}</p>
+            ${currentQ.options.map((opt, i) => `
+                <div class="option-card" onclick="game.handleAnswer(${i})">
+                    ${opt.text}
+                </div>
+            `).join('')}
+        `;
+
+        this.updateProgress();
+    }
+
+    handleAnswer(optionIndex) {
+        const selected = this.questions[this.currentStep].options[optionIndex];
+        selected.philosophy.forEach(philo => this.philosophyWeights[philo]++);
+        
+        this.currentStep++;
+        this.currentStep >= this.questions.length ? this.showResult() : this.renderQuestion();
+    }
+
+    updateProgress() {
+        const progress = (this.currentStep / this.questions.length) * 100;
+        document.getElementById('progressBar').style.width = `${progress}%`;
+    }
+
+    showResult() {
+        const modal = document.getElementById('resultModal');
+        modal.classList.add('modal-visible');
+        
+        document.getElementById('philosophyReport').innerHTML = this.generatePhilosophyReport();
+        this.generateRadarChart();
+    }
+
+    generateRadarChart() {
+        const data = {
+            labels: Object.keys(this.philosophyWeights),
+            datasets: [{
+                label: '哲学倾向',
+                data: Object.values(this.philosophyWeights),
+                backgroundColor: 'rgba(255,107,107,0.2)',
+                borderColor: 'var(--existentialism)',
+                pointBackgroundColor: 'var(--existentialism)',
+                pointBorderColor: '#fff'
+            }]
+        };
+
+        new Chart(document.getElementById('philosophyRadar'), {
+            type: 'radar',
+            data: data,
+            options: {
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: Math.max(...Object.values(this.philosophyWeights)) + 2
+                    }
+                }
+            }
+        });
+    }
+
+    getPhilosophyDescription(philo) {
+        const descriptions = {
+            'existentialism': '重视自由选择和当下体验，认为爱是自我创造的产物',
+            'nihilism': '怀疑绝对意义，但可能从中获得选择的自由',
+            'essentialism': '相信爱的永恒本质和预定论色彩',
+            'phenomenology': '关注爱的体验本身而非抽象概念',
+            'stoicism': '强调情感的理性和自我控制',
+            'deconstruction': '解构传统概念，关注差异和流动性',
+            'absurdism': '在荒诞中寻找反抗和自由',
+            'utilitarianism': '追求最大幸福和实际效益'
+        };
+        return descriptions[philo] || '独特的人格架构需要个性化解读';
+    }
+
+    generatePhilosophyReport() {
+        const mainPhilosophy = Object.entries(this.philosophyWeights)
+            .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+
+        const frameworks = {
+            'existentialism': {
+                color: 'var(--existentialism)',
+                title: '存在主义灯塔',
+                quote: '萨特：人是一堆无用的激情',
+                analysis: '你的选择展现出强烈的自由意志，在上帝已死的世界里，每段关系都是自我定义的英勇尝试。但需警惕绝对自由带来的责任重负。'
+            },
+            'essentialism': {
+                color: 'var(--essentialism)',
+                title: '本质主义神殿',
+                quote: '亚里士多德：整体大于部分之和',
+                analysis: '你追求柏拉图式的永恒之爱，这种理念如同《会饮篇》中讲述的球形人神话。但要小心理念世界对现实复杂性的遮蔽。'
+            },
+            'phenomenology': {
+                color: 'var(--phenomenology)',
+                title: '现象学棱镜',
+                quote: '梅洛-庞蒂：身体是世界的媒介',
+                analysis: '你专注于爱情的现象学还原，在具身化体验中把握爱的本质。但要警惕过度主观化的认知局限。'
+            }
+        };
+
+        const framework = frameworks[mainPhilosophy] || {
+            color: '#666',
+            title: '哲学万花筒',
+            quote: '赫拉克利特：一切皆流',
+            analysis: '你的爱情哲学在矛盾中绽放独特光芒'
+        };
+
+        return `
+            <div style="border-left: 4px solid ${framework.color}; padding-left: 1rem; text-align: left">
+                <h3 style="color:${framework.color}">${framework.title}</h3>
+                <blockquote>${framework.quote}</blockquote>
+                <p>${framework.analysis}</p>
+                <div class="radar-chart">
+                    <canvas id="philosophyRadar"></canvas>
+                </div>
+                <h4>详细维度分析：</h4>
+                ${Object.entries(this.philosophyWeights)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([philo, score]) => `
+                        <div style="margin: 10px 0; padding: 8px; background: ${this.getPhilosophyColor(philo)}20; border-radius: 8px">
+                            <strong>${philo}</strong>: ${score} 分<br>
+                            <small>${this.getPhilosophyDescription(philo)}</small>
+                        </div>
+                    `).join('')}
+            </div>
+        `;
+    }
+
+    getPhilosophyColor(philo) {
+        const colorMap = {
+            'existentialism': 'var(--existentialism)',
+            'essentialism': 'var(--essentialism)',
+            'phenomenology': 'var(--phenomenology)',
+            'stoicism': 'var(--stoicism)',
+            'deconstruction': 'var(--deconstruction)',
+            'absurdism': 'var(--absurdism)',
+            'utilitarianism': 'var(--utilitarianism)'
+        };
+        return colorMap[philo] || '#666';
+    }
+
+    createHeartParticle(e) {
+        const heart = document.createElement('div');
+        heart.className = 'heart-particle';
+        heart.style.cssText = `
+            position: absolute;
+            left: ${e.pageX}px;
+            top: ${e.pageY}px;
+            animation: float 3s ease-out forwards;
+            pointer-events: none;
+            font-size: 24px;
+        `;
+        heart.innerHTML = '❤️';
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 3000);
+    }
+}
+
+const game = new LovePhilosophyGame();
+window.onload = () => game.init();
+</script>
+</body>
+</html>
